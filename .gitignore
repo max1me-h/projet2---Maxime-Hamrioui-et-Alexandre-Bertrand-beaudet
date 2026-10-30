@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Tests et couverture
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Historique personnel des prédictions (créé par l'interface)
+donnees/historique_predictions.csv
+
+# Éditeurs
+.vscode/
+.idea/
