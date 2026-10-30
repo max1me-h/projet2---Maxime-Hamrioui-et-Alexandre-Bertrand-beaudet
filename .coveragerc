@@ -1,0 +1,7 @@
+[run]
+source = src
+# L'interface graphique est testée à la main (démo) : les tests portent sur la logique.
+omit = src/interface.py
+
+[report]
+show_missing = True
