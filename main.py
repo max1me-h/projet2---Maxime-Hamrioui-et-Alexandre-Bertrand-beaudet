@@ -1,14 +1,14 @@
 """Point d'entrée du projet.
 
     python main.py             ouvre l'interface graphique
-    python main.py entrainer   entraîne le modèle et l'enregistre dans model/sauvegarde/
+    python main.py entrainer   entraîne le modèle et l'enregistre dans backend/sauvegarde/
 """
 
 import argparse
 import sys
 
-from model.apprentissage.entrainement import entrainer_et_sauvegarder, resume_entrainement
-from model.exceptions import ErreurProjet
+from backend.entrainement import entrainer_et_sauvegarder, resume_entrainement
+from backend.exceptions import ErreurProjet
 
 
 def main(arguments: list[str] | None = None) -> int:
@@ -30,7 +30,7 @@ def main(arguments: list[str] | None = None) -> int:
         return 0
 
     # Import tardif : l'entraînement fonctionne même sans interface graphique (ex. serveur de CI).
-    from interface.affichage.fenetre import lancer_interface
+    from frontend.fenetre import lancer_interface
     lancer_interface()
     return 0
 

@@ -26,53 +26,50 @@ python -m pytest             # lance les 122 tests
 python -m coverage run -m pytest && python -m coverage report   # couverture
 ```
 
-Le modèle entraîné est fourni dans `model/sauvegarde/` : l'interface ne réentraîne rien au
+Le modèle entraîné est fourni dans `backend/sauvegarde/` : l'interface ne réentraîne rien au
 lancement. Si ces fichiers manquent, l'interface propose de lancer l'entraînement.
 
 ## Organisation du dépôt
 
-Le dépôt contient deux dossiers : `model/` (tout ce qui concerne les données et l'apprentissage)
-et `interface/` (l'application). `interface/` utilise `model/`, jamais l'inverse.
+Le code tient dans deux dossiers : `backend/` (données, apprentissage, graphiques du modèle) et
+`frontend/` (l'application et sa fenêtre), avec les fichiers Python directement dedans.
+`frontend/` utilise `backend/`, jamais l'inverse.
 
 ```
-model/
-├── config.py                chemins (module os), colonnes retenues, libellés français, règles de cohérence
-├── exceptions.py            ErreurProjet → DonneeInvalideError → SaisieInvalideError, FichierIntrouvableError, ...
-├── donnees/                 jeu de données IBM (CSV)
-├── preparation/
-│   ├── variables.py         Variable (abstraite) → VariableNumerique, VariableCategorielle → VariableOrdinale
-│   └── donnees.py           JeuDeDonnees : lecture par blocs, nettoyage, séparation ; lecture/écriture JSON et CSV
-├── apprentissage/
-│   ├── modeles.py           Modele (abstraite) → ModeleReference, ModeleLogistique, ModeleForetAleatoire
-│   ├── metriques.py         métriques NumPy vectorisées (comparées à scikit-learn dans les tests)
-│   ├── saisie_partielle.py  prédiction avec champs vides, précision attendue, effet de chaque champ
-│   └── entrainement.py      pipeline complet : exploration, comparaison, sauvegarde
-├── visualisation/
-│   ├── style.py             thèmes clair (figures enregistrées) et sombre (interface)
-│   └── graphiques.py        graphiques d'exploration et d'évaluation
-├── sauvegarde/              modèle (joblib), métadonnées (JSON), jeu de test et employés de référence (CSV)
-├── figures/                 graphiques enregistrés par l'entraînement
-└── tests/                   tests du modèle (+ fixtures.py, partagé avec interface/tests)
+backend/
+├── config.py            chemins (module os), colonnes retenues, libellés français, règles de cohérence
+├── exceptions.py        ErreurProjet → DonneeInvalideError → SaisieInvalideError, FichierIntrouvableError, ...
+├── variables.py         Variable (abstraite) → VariableNumerique, VariableCategorielle → VariableOrdinale
+├── jeu_de_donnees.py    JeuDeDonnees : lecture par blocs, nettoyage, séparation ; lecture/écriture JSON et CSV
+├── modeles.py           Modele (abstraite) → ModeleReference, ModeleLogistique, ModeleForetAleatoire
+├── metriques.py         métriques NumPy vectorisées (comparées à scikit-learn dans les tests)
+├── saisie_partielle.py  prédiction avec champs vides, précision attendue, effet de chaque champ
+├── entrainement.py      pipeline complet : exploration, comparaison, sauvegarde
+├── style.py             thèmes clair (figures enregistrées) et sombre (interface) des graphiques
+├── graphiques.py        graphiques d'exploration et d'évaluation
+├── donnees/             jeu de données IBM (CSV)
+├── sauvegarde/          modèle (joblib), métadonnées (JSON), jeu de test et employés de référence (CSV)
+├── figures/             graphiques enregistrés par l'entraînement
+└── tests/               tests du back end (+ fixtures.py, partagé avec frontend/tests)
 
-interface/
-├── logique/                 aucune dépendance graphique : testable
-│   ├── application.py       Application (composition : modèle + variables + historique) et Prediction
-│   └── historique.py        Historique : ajout et lecture du CSV des prédictions
-├── affichage/               CustomTkinter : n'effectue aucun calcul, appelle Application
-│   ├── fenetre.py           FenetrePrincipale : barre latérale de navigation, avertissement
-│   ├── pages.py             PagePrediction, PageModele, PageHistorique, PageAPropos
-│   ├── composants.py        Carte, Tuile, Champ, ZoneGraphique, boutons
-│   ├── theme.py             palette sombre et polices
-│   └── graphiques.py        graphiques de l'interface (précision, facteurs, position)
-├── historique/              historique des prédictions (créé à l'usage, ignoré par Git)
-└── tests/                   tests de la logique de l'application
+frontend/
+├── application.py       Application (composition : modèle + variables + historique) et Prediction
+├── historique.py        Historique : ajout et lecture du CSV des prédictions
+├── fenetre.py           FenetrePrincipale : barre latérale de navigation, avertissement
+├── pages.py             PagePrediction, PageModele, PageHistorique, PageAPropos
+├── composants.py        Carte, Tuile, Champ, ZoneGraphique, boutons
+├── theme.py             palette sombre et polices
+├── graphiques.py        graphiques de l'interface (précision, facteurs, position)
+└── tests/               tests de la logique de l'application
 
-main.py                      point d'entrée (argparse)
+main.py                  point d'entrée (argparse)
 ```
 
-À la racine se trouvent aussi les fichiers exigés par l'énoncé (`README.md`, `DECISIONS.md`,
-`JOURNAL_IA.md`, `requirements.txt`), la configuration des tests (`pyproject.toml`) et la CI
-(`.github/workflows/`, emplacement imposé par GitHub).
+`application.py` et `historique.py` ne dépendent d'aucune fenêtre : ils sont testés. Les fichiers
+d'affichage (`fenetre.py`, `pages.py`, `composants.py`) n'effectuent aucun calcul : ils appellent
+`Application`. À la racine se trouvent aussi les fichiers exigés par l'énoncé (`README.md`,
+`DECISIONS.md`, `JOURNAL_IA.md`, `requirements.txt`), la configuration des tests (`pyproject.toml`)
+et la CI (`.github/workflows/`, emplacement imposé par GitHub).
 
 ## Utilisation
 
@@ -89,7 +86,7 @@ La barre latérale donne accès à quatre pages ; l'avertissement y reste toujou
      d'un coup. Aucune erreur ne fait planter l'application.
 2. **Le modèle** : indicateurs clés, comparaison avec la référence, matrice de confusion, variables
    les plus utiles, comparaison « satisfaction ou départ ».
-3. **Historique** : chaque prédiction est ajoutée à `interface/historique/historique_predictions.csv` ;
+3. **Historique** : chaque prédiction est ajoutée à `frontend/historique_predictions.csv` ;
    cliquez sur une ligne pour revoir ses saisies.
 4. **À propos** : lecture des résultats, limites, source des données.
 
@@ -102,7 +99,7 @@ La barre latérale donne accès à quatre pages ; l'avertissement y reste toujou
 | Licence | Open Database License (base de données) et Database Contents License (contenu) : redistribution permise avec attribution |
 | Taille | 1470 lignes, 35 colonnes (dont 26 caractéristiques conservées : 11 numériques, 8 échelles ordonnées, 7 catégorielles) |
 | Données personnelles | Aucune : employés fictifs créés par des scientifiques des données d'IBM |
-| Fichier | `model/donnees/WA_Fn-UseC_-HR-Employee-Attrition.csv` (228 Ko) |
+| Fichier | `backend/donnees/WA_Fn-UseC_-HR-Employee-Attrition.csv` (228 Ko) |
 
 **Cible :** `Attrition` (l'employé a-t-il quitté l'entreprise ? 16 % de « oui »), donc une
 **classification binaire**. Nous voulions d'abord prédire la satisfaction au travail, mais elle n'est
@@ -139,14 +136,14 @@ déjà 69 %. **Limites :** données fictives ; modèle linéaire ; peu de dépar
 **Satisfaction au lieu du départ :** la régression logistique obtient 44 % d'exactitude équilibrée
 pour prédire « satisfait (3 ou 4 sur 4) », moins bien que la référence (50 %).
 
-Graphiques produits par l'entraînement, dans `model/figures/` : `exploration_taux_depart.png`,
+Graphiques produits par l'entraînement, dans `backend/figures/` : `exploration_taux_depart.png`,
 `exploration_satisfaction.png`, `comparaison_cibles.png`, `matrice_confusion.png`, `importances.png`.
 
 ## Comment fonctionne la précision attendue
 
 Quand un champ est vide, on ne connaît pas sa valeur. Le modèle essaie alors les valeurs de **40
 vrais employés de référence** (tirés de l'entraînement) et fait la moyenne des 40 risques
-([model/apprentissage/saisie_partielle.py](model/apprentissage/saisie_partielle.py), calcul vectorisé
+([backend/saisie_partielle.py](backend/saisie_partielle.py), calcul vectorisé
 avec `np.repeat` / `np.tile`, sans boucle). Le même calcul, appliqué aux 368 employés de test en ne
 gardant que les champs remplis, donne la précision attendue. Elle est mise en cache pour chaque
 combinaison de champs.
@@ -166,10 +163,10 @@ méthodes spéciales `__str__`, `__repr__`, `__eq__`, `__hash__`, `__len__`.
 
 ### Outils du chapitre 7
 
-- **Décorateur** `chronometre` ([model/apprentissage/modeles.py](model/apprentissage/modeles.py)) :
+- **Décorateur** `chronometre` ([backend/modeles.py](backend/modeles.py)) :
   mesure la durée de `Modele.entrainer` et la range dans l'objet, sans mélanger le chronométrage au
   code d'entraînement.
-- **Générateur** `lire_par_blocs` ([model/preparation/donnees.py](model/preparation/donnees.py)) :
+- **Générateur** `lire_par_blocs` ([backend/jeu_de_donnees.py](backend/jeu_de_donnees.py)) :
   produit le CSV 500 lignes à la fois avec `yield from`, ce qui permettrait de lire un fichier trop
   gros pour la mémoire.
 - **Lambda** comme clé de tri : trier les variables par importance, l'historique par date, choisir
@@ -177,14 +174,14 @@ méthodes spéciales `__str__`, `__repr__`, `__eq__`, `__hash__`, `__len__`.
 
 ## Tests et couverture
 
-122 tests pytest, dans `model/tests/` et `interface/tests/` : cas usuels, cas limites (bornes
+122 tests pytest, dans `backend/tests/` et `frontend/tests/` : cas usuels, cas limites (bornes
 incluses, formulaire vide, une seule classe) et cas d'erreur (`pytest.raises`), avec `pytest.approx`
 pour les flottants. Les métriques NumPy et le calcul vectorisé des champs vides sont vérifiés contre
 scikit-learn et contre une boucle écrite à la main. GitHub Actions lance les tests à chaque `push`
 ([.github/workflows/tests.yml](.github/workflows/tests.yml)).
 
-**Couverture (coverage 7.17) : 97 %** des instructions de `model/` et `interface/`, hors fenêtres
-CustomTkinter (`interface/affichage/` sauf `graphiques.py`), vérifiées à la main pendant la démo
+**Couverture (coverage 7.17) : 97 %** des instructions de `backend/` et `frontend/`, hors fenêtres
+CustomTkinter (`fenetre.py`, `pages.py`, `composants.py`, `theme.py`), vérifiées à la main pendant la démo
 (voir `pyproject.toml`).
 
 ## Documentation consultée

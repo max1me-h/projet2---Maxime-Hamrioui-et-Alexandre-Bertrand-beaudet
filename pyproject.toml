@@ -1,14 +1,14 @@
 # Configuration des outils de test (le projet se lance avec « python main.py »).
 
 [tool.pytest.ini_options]
-testpaths = ["model/tests", "interface/tests"]
+testpaths = ["backend/tests", "frontend/tests"]
 pythonpath = ["."]
 
 [tool.coverage.run]
-source = ["model", "interface"]
+source = ["backend", "frontend"]
 # Les fenêtres CustomTkinter sont vérifiées à la main (démo) : les tests portent sur la logique.
-omit = ["*/tests/*", "interface/affichage/fenetre.py", "interface/affichage/pages.py",
-        "interface/affichage/composants.py", "interface/affichage/theme.py"]
+omit = ["*/tests/*", "frontend/fenetre.py", "frontend/pages.py",
+        "frontend/composants.py", "frontend/theme.py"]
 
 [tool.coverage.report]
 show_missing = true

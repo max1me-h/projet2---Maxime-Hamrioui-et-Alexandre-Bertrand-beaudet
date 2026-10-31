@@ -10,7 +10,7 @@ venv/
 htmlcov/
 
 # Historique personnel des prédictions (créé par l'interface)
-interface/historique/
+frontend/historique_predictions.csv
 
 # Éditeurs
 .vscode/

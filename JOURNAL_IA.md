@@ -1,7 +1,7 @@
 # Journal d'utilisation de l'IA
 
 Outil principal : un assistant de programmation IA intégré à VS Code, utilisé le 30 octobre 2026.
-Les entrées 1 à 10 décrivent cette séance. **À compléter par l'équipe** : la relecture ligne par
+Les entrées 1 à 11 décrivent cette séance. **À compléter par l'équipe** : la relecture ligne par
 ligne du code et les séances suivantes (une entrée par question posée à une IA).
 
 | # | Outil | Ce que nous avons demandé | Réponse reçue | Vérification faite | Décision |
@@ -16,3 +16,4 @@ ligne du code et les séances suivantes (une entrée par question posée à une 
 | 8 | Assistant IA | Pages de documentation à citer dans le README. | 10 liens (pandas, scikit-learn, Tkinter, Matplotlib, pytest, GitHub Actions). | **À faire :** ouvrir chaque page et vérifier qu'elle décrit bien ce que fait notre code (`chunksize`, `class_weight`, `FigureCanvasTkAgg`...). | À confirmer. |
 | 9 | Assistant IA | Rendre l'interface beaucoup plus moderne, en tons sombres. | Passage à CustomTkinter 5.2.2 : barre latérale, cartes arrondies, indicateurs clés, graphiques Matplotlib en thème sombre, vérification de chaque champ dès qu'on le quitte. | Interface pilotée par un script avec captures d'écran. Première version refusée : la taille de la fenêtre était mal calculée (taille d'écran divisée deux fois par l'échelle), ce qui écrasait le graphique et coupait des textes. Corrigé : fenêtre en plein écran, cartes regroupées, champs plus compacts. 122 tests réussis. | Modifié après vérification visuelle. |
 | 10 | Assistant IA | Ne garder à la racine du dépôt qu'un dossier `interface` et un dossier `model`, avec des sous-dossiers organisés. | Fichiers déplacés avec `git mv` (historique conservé) dans `model/{donnees, preparation, apprentissage, visualisation, sauvegarde, figures, tests}` et `interface/{logique, affichage, historique, tests}`. Les fichiers exigés par l'énoncé et GitHub restent à la racine. | Modèle réentraîné : le fichier joblib mémorisait l'ancien chemin `src.modele`. Les 122 tests passent, `python main.py` ouvre l'interface. | Gardé. |
+| 11 | Assistant IA | Ne garder qu'une branche (`main`) et deux dossiers de code, un back end et un front end, avec les fichiers Python dedans. | `model/` devient `backend/` et `interface/` devient `frontend/`, modules à plat (déplacés avec `git mv`) ; branche de travail fusionnée dans `main` puis supprimée. | Modèle réentraîné (le fichier joblib mémorise le chemin des modules) ; 122 tests réussis ; `python main.py` ouvre l'interface ; CI vérifiée sur `main`. | Gardé. |
