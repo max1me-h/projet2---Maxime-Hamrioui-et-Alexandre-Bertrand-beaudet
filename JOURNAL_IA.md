@@ -1,7 +1,7 @@
 # Journal d'utilisation de l'IA
 
 Outil principal : un assistant de programmation IA intégré à VS Code, utilisé le 30 octobre 2026.
-Les entrées 1 à 8 décrivent cette séance. **À compléter par l'équipe** : la relecture ligne par
+Les entrées 1 à 10 décrivent cette séance. **À compléter par l'équipe** : la relecture ligne par
 ligne du code et les séances suivantes (une entrée par question posée à une IA).
 
 | # | Outil | Ce que nous avons demandé | Réponse reçue | Vérification faite | Décision |
@@ -14,3 +14,5 @@ ligne du code et les séances suivantes (une entrée par question posée à une 
 | 6 | Assistant IA | Écrire le code (13 modules), l'interface Tkinter et les tests. | Code complet, 117 tests, couverture 96 % hors interface. | Exécution de pytest (117 réussis) ; l'interface a été pilotée par un script avec captures d'écran (prédiction, saisie invalide, formulaire vide, 4 onglets). Défauts trouvés et corrigés : colonnes du tableau coupées, chemin trop long dans l'historique, « 0 % » affiché au lieu de « < 1 % ». | Modifié après vérification visuelle. **À faire :** relire chaque fonction ensemble ; nous devons pouvoir expliquer chaque ligne. |
 | 7 | Assistant IA | Retirer ou garder la colonne « genre » ? | La retirer : motif de discrimination interdit (Charte québécoise, art. 10), apport < 1 point d'exactitude équilibrée. | Exécution : validation croisée sans le genre 75,6 %, avec 76,3 % ; sur le test 72,5 % contre 72,7 % (écarts dans le bruit). | Gardé. |
 | 8 | Assistant IA | Pages de documentation à citer dans le README. | 10 liens (pandas, scikit-learn, Tkinter, Matplotlib, pytest, GitHub Actions). | **À faire :** ouvrir chaque page et vérifier qu'elle décrit bien ce que fait notre code (`chunksize`, `class_weight`, `FigureCanvasTkAgg`...). | À confirmer. |
+| 9 | Assistant IA | Rendre l'interface beaucoup plus moderne, en tons sombres. | Passage à CustomTkinter 5.2.2 : barre latérale, cartes arrondies, indicateurs clés, graphiques Matplotlib en thème sombre, vérification de chaque champ dès qu'on le quitte. | Interface pilotée par un script avec captures d'écran. Première version refusée : la taille de la fenêtre était mal calculée (taille d'écran divisée deux fois par l'échelle), ce qui écrasait le graphique et coupait des textes. Corrigé : fenêtre en plein écran, cartes regroupées, champs plus compacts. 122 tests réussis. | Modifié après vérification visuelle. |
+| 10 | Assistant IA | Ne garder à la racine du dépôt qu'un dossier `interface` et un dossier `model`, avec des sous-dossiers organisés. | Fichiers déplacés avec `git mv` (historique conservé) dans `model/{donnees, preparation, apprentissage, visualisation, sauvegarde, figures, tests}` et `interface/{logique, affichage, historique, tests}`. Les fichiers exigés par l'énoncé et GitHub restent à la racine. | Modèle réentraîné : le fichier joblib mémorisait l'ancien chemin `src.modele`. Les 122 tests passent, `python main.py` ouvre l'interface. | Gardé. |

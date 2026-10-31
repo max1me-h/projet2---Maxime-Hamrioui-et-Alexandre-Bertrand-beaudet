@@ -2,9 +2,10 @@
 
 Maxime Hamrioui et Alexandre Bertrand-Beaudet · automne 2026
 
-Application de bureau (Tkinter) qui estime le **risque qu'un employé quitte son entreprise** à partir
-de 26 caractéristiques de sa vie professionnelle et personnelle (âge, état civil, poste, salaire,
-heures supplémentaires, ancienneté, satisfaction, équilibre travail-vie personnelle…).
+Application de bureau à thème sombre (CustomTkinter) qui estime le **risque qu'un employé quitte
+son entreprise** à partir de 26 caractéristiques de sa vie professionnelle et personnelle (âge, état
+civil, poste, salaire, heures supplémentaires, ancienneté, satisfaction, équilibre travail-vie
+personnelle…).
 
 Le formulaire accepte des **saisies partielles** : chaque champ vide fait baisser la **précision
 attendue**, affichée en direct avec un graphique « précision selon le nombre de champs remplis ».
@@ -12,6 +13,85 @@ attendue**, affichée en direct avec un graphique « précision selon le nombre 
 > ⚠ **Exercice pédagogique.** Les données sont fictives et le modèle se trompe environ une fois
 > sur quatre. Plusieurs variables (âge, état civil) sont des motifs de discrimination interdits :
 > l'outil ne doit jamais servir à une décision réelle concernant un employé.
+
+## Installation et lancement
+
+Python 3.11 ou plus récent, depuis le dossier du dépôt :
+
+```bash
+python -m pip install -r requirements.txt
+python main.py               # ouvre l'interface graphique
+python main.py entrainer     # (re)entraîne le modèle, environ 25 s
+python -m pytest             # lance les 122 tests
+python -m coverage run -m pytest && python -m coverage report   # couverture
+```
+
+Le modèle entraîné est fourni dans `model/sauvegarde/` : l'interface ne réentraîne rien au
+lancement. Si ces fichiers manquent, l'interface propose de lancer l'entraînement.
+
+## Organisation du dépôt
+
+Le dépôt contient deux dossiers : `model/` (tout ce qui concerne les données et l'apprentissage)
+et `interface/` (l'application). `interface/` utilise `model/`, jamais l'inverse.
+
+```
+model/
+├── config.py                chemins (module os), colonnes retenues, libellés français, règles de cohérence
+├── exceptions.py            ErreurProjet → DonneeInvalideError → SaisieInvalideError, FichierIntrouvableError, ...
+├── donnees/                 jeu de données IBM (CSV)
+├── preparation/
+│   ├── variables.py         Variable (abstraite) → VariableNumerique, VariableCategorielle → VariableOrdinale
+│   └── donnees.py           JeuDeDonnees : lecture par blocs, nettoyage, séparation ; lecture/écriture JSON et CSV
+├── apprentissage/
+│   ├── modeles.py           Modele (abstraite) → ModeleReference, ModeleLogistique, ModeleForetAleatoire
+│   ├── metriques.py         métriques NumPy vectorisées (comparées à scikit-learn dans les tests)
+│   ├── saisie_partielle.py  prédiction avec champs vides, précision attendue, effet de chaque champ
+│   └── entrainement.py      pipeline complet : exploration, comparaison, sauvegarde
+├── visualisation/
+│   ├── style.py             thèmes clair (figures enregistrées) et sombre (interface)
+│   └── graphiques.py        graphiques d'exploration et d'évaluation
+├── sauvegarde/              modèle (joblib), métadonnées (JSON), jeu de test et employés de référence (CSV)
+├── figures/                 graphiques enregistrés par l'entraînement
+└── tests/                   tests du modèle (+ fixtures.py, partagé avec interface/tests)
+
+interface/
+├── logique/                 aucune dépendance graphique : testable
+│   ├── application.py       Application (composition : modèle + variables + historique) et Prediction
+│   └── historique.py        Historique : ajout et lecture du CSV des prédictions
+├── affichage/               CustomTkinter : n'effectue aucun calcul, appelle Application
+│   ├── fenetre.py           FenetrePrincipale : barre latérale de navigation, avertissement
+│   ├── pages.py             PagePrediction, PageModele, PageHistorique, PageAPropos
+│   ├── composants.py        Carte, Tuile, Champ, ZoneGraphique, boutons
+│   ├── theme.py             palette sombre et polices
+│   └── graphiques.py        graphiques de l'interface (précision, facteurs, position)
+├── historique/              historique des prédictions (créé à l'usage, ignoré par Git)
+└── tests/                   tests de la logique de l'application
+
+main.py                      point d'entrée (argparse)
+```
+
+À la racine se trouvent aussi les fichiers exigés par l'énoncé (`README.md`, `DECISIONS.md`,
+`JOURNAL_IA.md`, `requirements.txt`), la configuration des tests (`pyproject.toml`) et la CI
+(`.github/workflows/`, emplacement imposé par GitHub).
+
+## Utilisation
+
+La barre latérale donne accès à quatre pages ; l'avertissement y reste toujours visible.
+
+1. **Prédiction** : remplissez autant de champs que vous voulez (ou chargez un des « exemples
+   réels » tirés du jeu de test), puis cliquez sur **Prédire** (ou appuyez sur Entrée).
+   - En haut à droite : le risque de départ (pourcentage, badge coloré, barre) et la **précision
+     attendue** avec le nombre de champs remplis et les champs les plus utiles à remplir ensuite.
+   - Trois graphiques : précision selon le nombre de champs (avec votre position), facteurs qui
+     influencent le résultat, position de l'employé parmi ceux du jeu de test.
+   - Une saisie invalide est signalée sous le champ, en rouge, dès qu'on le quitte ; à la
+     prédiction, toutes les erreurs (y compris les incohérences entre deux champs) sont affichées
+     d'un coup. Aucune erreur ne fait planter l'application.
+2. **Le modèle** : indicateurs clés, comparaison avec la référence, matrice de confusion, variables
+   les plus utiles, comparaison « satisfaction ou départ ».
+3. **Historique** : chaque prédiction est ajoutée à `interface/historique/historique_predictions.csv` ;
+   cliquez sur une ligne pour revoir ses saisies.
+4. **À propos** : lecture des résultats, limites, source des données.
 
 ## Jeu de données
 
@@ -22,41 +102,11 @@ attendue**, affichée en direct avec un graphique « précision selon le nombre 
 | Licence | Open Database License (base de données) et Database Contents License (contenu) : redistribution permise avec attribution |
 | Taille | 1470 lignes, 35 colonnes (dont 26 caractéristiques conservées : 11 numériques, 8 échelles ordonnées, 7 catégorielles) |
 | Données personnelles | Aucune : employés fictifs créés par des scientifiques des données d'IBM |
-| Fichier | `donnees/WA_Fn-UseC_-HR-Employee-Attrition.csv` (228 Ko) |
+| Fichier | `model/donnees/WA_Fn-UseC_-HR-Employee-Attrition.csv` (228 Ko) |
 
 **Cible :** `Attrition` (l'employé a-t-il quitté l'entreprise ? 16 % de « oui »), donc une
 **classification binaire**. Nous voulions d'abord prédire la satisfaction au travail, mais elle n'est
 pas prévisible avec ces données (voir [DECISIONS.md](DECISIONS.md)).
-
-## Installation et lancement
-
-Python 3.11 ou plus récent.
-
-```bash
-python -m pip install -r requirements.txt
-python -m src.main               # ouvre l'interface graphique
-python -m src.main entrainer     # (re)entraîne le modèle, environ 25 s
-python -m pytest                 # lance les 117 tests
-python -m coverage run -m pytest && python -m coverage report   # couverture
-```
-
-Le modèle entraîné est fourni dans `modeles/` : l'interface ne réentraîne rien au lancement. Si ces
-fichiers manquent, l'interface propose de lancer l'entraînement.
-
-## Utilisation
-
-1. **Onglet Prédiction** : remplissez autant de champs que vous voulez (ou cliquez sur un des
-   « exemples réels » tirés du jeu de test), puis sur **Prédire** (ou Entrée).
-   - À droite : le risque de départ, son niveau en mots, une phrase d'explication, le nombre de
-     champs remplis, la **précision attendue** et les champs les plus utiles à remplir ensuite.
-   - Trois graphiques : précision selon le nombre de champs (avec votre position), ce qui influence
-     le résultat, position de l'employé parmi ceux du jeu de test.
-   - Une saisie invalide (texte, hors intervalle, incohérence entre deux champs) colore le champ en
-     rouge et affiche un message clair ; aucune erreur ne fait planter l'application.
-2. **Onglet Le modèle** : métriques comparées à la référence, matrice de confusion, variables les
-   plus utiles, comparaison « satisfaction ou départ ».
-3. **Onglet Historique** : chaque prédiction est ajoutée à `donnees/historique_predictions.csv` ;
-   cliquez sur une ligne pour revoir ses saisies.
 
 ## Résultats du modèle
 
@@ -89,70 +139,53 @@ déjà 69 %. **Limites :** données fictives ; modèle linéaire ; peu de dépar
 **Satisfaction au lieu du départ :** la régression logistique obtient 44 % d'exactitude équilibrée
 pour prédire « satisfait (3 ou 4 sur 4) », moins bien que la référence (50 %).
 
-Graphiques produits par l'entraînement : `figures/exploration_taux_depart.png`,
-`figures/exploration_satisfaction.png`, `figures/comparaison_cibles.png`,
-`figures/matrice_confusion.png`, `figures/importances.png`.
+Graphiques produits par l'entraînement, dans `model/figures/` : `exploration_taux_depart.png`,
+`exploration_satisfaction.png`, `comparaison_cibles.png`, `matrice_confusion.png`, `importances.png`.
 
 ## Comment fonctionne la précision attendue
 
 Quand un champ est vide, on ne connaît pas sa valeur. Le modèle essaie alors les valeurs de **40
 vrais employés de référence** (tirés de l'entraînement) et fait la moyenne des 40 risques
-([src/saisie_partielle.py](src/saisie_partielle.py), calcul vectorisé avec `np.repeat` / `np.tile`,
-sans boucle). Le même calcul, appliqué aux 368 employés de test en ne gardant que les champs remplis,
-donne la précision attendue. Elle est mise en cache pour chaque combinaison de champs.
+([model/apprentissage/saisie_partielle.py](model/apprentissage/saisie_partielle.py), calcul vectorisé
+avec `np.repeat` / `np.tile`, sans boucle). Le même calcul, appliqué aux 368 employés de test en ne
+gardant que les champs remplis, donne la précision attendue. Elle est mise en cache pour chaque
+combinaison de champs.
 
 Une première version remplaçait chaque champ vide par la médiane : avec un ou deux champs remplis,
 l'employé « médian » restait toujours sous le seuil de 50 % et la précision restait bloquée à 50 %.
 La moyenne sur des employés réels fait passer la précision avec le seul champ « heures
 supplémentaires » de 50 % à 69 %.
 
-## Structure du code
+## Programmation orientée objet
 
-```
-donnees/                     jeu de données IBM (+ historique des prédictions, ignoré par Git)
-modeles/                     modèle (joblib), métadonnées (JSON), jeu de test et employés de référence (CSV)
-figures/                     graphiques enregistrés par l'entraînement
-src/
-├── config.py                chemins (module os), colonnes retenues, libellés français, règles de cohérence
-├── exceptions.py            ErreurProjet → DonneeInvalideError → SaisieInvalideError, FichierIntrouvableError, ...
-├── variables.py             Variable (abstraite) → VariableNumerique, VariableCategorielle → VariableOrdinale
-├── donnees.py               JeuDeDonnees : lecture par blocs, nettoyage, séparation ; lecture/écriture JSON
-├── metriques.py             métriques NumPy vectorisées (comparées à scikit-learn dans les tests)
-├── modele.py                Modele (abstraite) → ModeleReference, ModeleLogistique, ModeleForetAleatoire
-├── saisie_partielle.py      prédiction avec champs vides, précision attendue, effet de chaque champ
-├── historique.py            Historique : ajout et lecture du CSV des prédictions
-├── application.py           Application (composition : modèle + variables + historique) et Prediction
-├── graphiques.py            figures Matplotlib (objets Figure, sans pyplot)
-├── entrainement.py          pipeline complet : exploration, comparaison, sauvegarde
-├── interface.py             interface Tkinter (aucun calcul : elle appelle Application)
-└── main.py                  point d'entrée (argparse)
-tests/                       117 tests pytest (logique seulement)
-```
-
-**Programmation orientée objet :** 2 hiérarchies avec classe parente abstraite et polymorphisme
-(`Variable.valider` / `formater`, `Modele._creer_estimateur`), plus la hiérarchie des exceptions ; composition (`Application` contient le `Modele`, les
-`Variable`, l'`Historique` ; `FenetrePrincipale` contient l'`Application` et les `Champ`) ;
-attributs protégés exposés par des propriétés ; méthodes spéciales `__str__`, `__repr__`, `__eq__`,
-`__hash__`, `__len__`.
+2 hiérarchies avec classe parente abstraite et polymorphisme (`Variable.valider` / `formater`,
+`Modele._creer_estimateur`), plus la hiérarchie des exceptions ; composition (`Application`
+contient le `Modele`, les `Variable` et l'`Historique` ; `FenetrePrincipale` contient les pages,
+qui contiennent l'`Application` et les `Champ`) ; attributs protégés exposés par des propriétés ;
+méthodes spéciales `__str__`, `__repr__`, `__eq__`, `__hash__`, `__len__`.
 
 ### Outils du chapitre 7
 
-- **Décorateur** `chronometre` ([src/modele.py](src/modele.py)) : mesure la durée de
-  `Modele.entrainer` et la range dans l'objet, sans mélanger le chronométrage au code d'entraînement.
-- **Générateur** `lire_par_blocs` ([src/donnees.py](src/donnees.py)) : produit le CSV 500 lignes à
-  la fois avec `yield from`, ce qui permettrait de lire un fichier trop gros pour la mémoire.
+- **Décorateur** `chronometre` ([model/apprentissage/modeles.py](model/apprentissage/modeles.py)) :
+  mesure la durée de `Modele.entrainer` et la range dans l'objet, sans mélanger le chronométrage au
+  code d'entraînement.
+- **Générateur** `lire_par_blocs` ([model/preparation/donnees.py](model/preparation/donnees.py)) :
+  produit le CSV 500 lignes à la fois avec `yield from`, ce qui permettrait de lire un fichier trop
+  gros pour la mémoire.
 - **Lambda** comme clé de tri : trier les variables par importance, l'historique par date, choisir
   le modèle de meilleure validation croisée (`max(..., key=lambda modele: ...)`).
 
 ## Tests et couverture
 
-117 tests pytest : cas usuels, cas limites (bornes incluses, formulaire vide, une seule classe) et
-cas d'erreur (`pytest.raises`), avec `pytest.approx` pour les flottants. Les métriques NumPy et le
-calcul vectorisé des champs vides sont vérifiés contre scikit-learn et contre une boucle écrite à la
-main. GitHub Actions lance les tests à chaque `push` ([.github/workflows/tests.yml](.github/workflows/tests.yml)).
+122 tests pytest, dans `model/tests/` et `interface/tests/` : cas usuels, cas limites (bornes
+incluses, formulaire vide, une seule classe) et cas d'erreur (`pytest.raises`), avec `pytest.approx`
+pour les flottants. Les métriques NumPy et le calcul vectorisé des champs vides sont vérifiés contre
+scikit-learn et contre une boucle écrite à la main. GitHub Actions lance les tests à chaque `push`
+([.github/workflows/tests.yml](.github/workflows/tests.yml)).
 
-**Couverture (coverage 7.17) : 96 %** des instructions de `src/`, interface graphique exclue
-(`src/interface.py` est vérifiée à la main pendant la démo ; voir `.coveragerc`).
+**Couverture (coverage 7.17) : 97 %** des instructions de `model/` et `interface/`, hors fenêtres
+CustomTkinter (`interface/affichage/` sauf `graphiques.py`), vérifiées à la main pendant la démo
+(voir `pyproject.toml`).
 
 ## Documentation consultée
 
@@ -162,7 +195,8 @@ main. GitHub Actions lance les tests à chaque `push` ([.github/workflows/tests.
 - scikit-learn — exactitude équilibrée : <https://scikit-learn.org/stable/modules/model_evaluation.html#balanced-accuracy-score>
 - scikit-learn — importance par permutation : <https://scikit-learn.org/stable/modules/permutation_importance.html>
 - scikit-learn — sauvegarde des modèles : <https://scikit-learn.org/stable/model_persistence.html>
-- Tkinter / ttk : <https://docs.python.org/3/library/tkinter.ttk.html>
+- CustomTkinter : <https://customtkinter.tomschimansky.com/documentation/>
+- Tkinter / ttk (tableaux `Treeview`) : <https://docs.python.org/3/library/tkinter.ttk.html>
 - Matplotlib dans Tkinter : <https://matplotlib.org/stable/gallery/user_interfaces/embedding_in_tk_sgskip.html>
 - pytest, exceptions attendues : <https://docs.pytest.org/en/stable/how-to/assert.html>
 - GitHub Actions pour Python : <https://docs.github.com/en/actions/use-cases-and-examples/building-and-testing/building-and-testing-python>
